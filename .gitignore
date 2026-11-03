@@ -1,0 +1,11 @@
+.env
+.env.*
+*.env
+__pycache__/
+.DS_Store
+*.pyc
+out/
+.terraform/
+*.tfstate*
+dashboard.json
+accounts/

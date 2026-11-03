@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PoV engagement report</title>
+<!-- Static app: no data and no PII in this file. Data comes from report.data.js (same content as report.json). -->
+<style>
+.viz-root { color-scheme: light;
+  --surface-0:#f4f4f2; --surface-1:#fcfcfb; --border:#e3e2de; --grid:#ecebe7; --empty:#efeeea;
+  --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#7a7974;
+  --series-1:#2a78d6; --tier-e:#184f95; --tier-l:#3987e5; --tier-p:#86b6ef;
+  --up:#2a78d6; --new:#86b6ef; --down:#f2a3a2; --drop:#e34948; --nr:#eb6834;
+  --good:#0ca30c; --warning:#fab219; --critical:#d03b3b; --top:#eef4fc; }
+@media (prefers-color-scheme: dark) { :root:where(:not([data-theme="light"])) .viz-root { color-scheme: dark;
+  --surface-0:#111110; --surface-1:#1a1a19; --border:#2e2e2b; --grid:#262624; --empty:#262624;
+  --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#8f8e86; --series-1:#3987e5;
+  --tier-e:#9ec5f4; --tier-l:#5598e7; --tier-p:#256abf; --up:#3987e5; --new:#256abf; --down:#a84444; --drop:#e66767; --nr:#d95926; --top:#1f2a38; } }
+:root[data-theme="dark"] .viz-root { color-scheme: dark;
+  --surface-0:#111110; --surface-1:#1a1a19; --border:#2e2e2b; --grid:#262624; --empty:#262624;
+  --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#8f8e86; --series-1:#3987e5;
+  --tier-e:#9ec5f4; --tier-l:#5598e7; --tier-p:#256abf; --up:#3987e5; --new:#256abf; --down:#a84444; --drop:#e66767; --nr:#d95926; --top:#1f2a38; }
+body { margin:0; }
+.viz-root { background:var(--surface-0); color:var(--text-primary); font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif; min-height:100vh; }
+main { max-width:1240px; margin:0 auto; padding:12px 20px 40px; }
+h1 { font-size:20px; margin:0; } h2 { font-size:17px; margin:22px 0 8px; scroll-margin-top:60px; } h3 { font-size:14px; margin:0 0 8px; font-weight:600; }
+.muted { color:var(--text-muted); } .small { font-size:12px; }
+.topnav { position:sticky; top:0; z-index:5; background:var(--surface-0); border-bottom:1px solid var(--border); }
+.topnav .in { max-width:1240px; margin:0 auto; padding:8px 20px; display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; }
+.topnav a { color:var(--text-secondary); text-decoration:none; font-weight:600; font-size:13px; } .topnav a:hover { color:var(--text-primary); }
+.topnav .sp { flex:1; }
+button, .btn { background:var(--surface-1); color:var(--text-secondary); border:1px solid var(--border); border-radius:6px; padding:3px 10px; cursor:pointer; font:inherit; font-size:12px; }
+.filter { position:relative; } .filter > summary { list-style:none; } .filter > summary::-webkit-details-marker { display:none; }
+.filter .pop { position:absolute; right:0; top:28px; width:340px; max-height:70vh; overflow:auto; background:var(--surface-1); border:1px solid var(--border); border-radius:10px; padding:12px; box-shadow:0 6px 24px rgba(0,0,0,.25); }
+.filter label { display:flex; gap:6px; align-items:center; font-size:12px; padding:2px 0; } .filter label span.m { margin-left:auto; }
+.meta { margin:8px 0 10px; font-size:12px; }
+.card { background:var(--surface-1); border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin:10px 0; }
+details.card > summary { cursor:pointer; font-weight:600; font-size:14px; } details.card[open] > summary { margin-bottom:8px; }
+details.fold { border-top:1px solid var(--grid); padding:6px 0; } details.fold > summary { cursor:pointer; font-size:13px; font-weight:500; } .fold-body { padding:8px 0 4px 14px; }
+.grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(360px,1fr)); gap:10px; } .grid2 > .card { margin:0; }
+.summary { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:10px; }
+.summary .card { margin:0; }
+.kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:10px 0; }
+.tile { background:var(--surface-1); border:1px solid var(--border); border-radius:10px; padding:10px 12px; }
+.tl { font-size:12px; color:var(--text-muted); } .tv { font-size:22px; font-weight:650; margin:2px 0; font-variant-numeric:tabular-nums; } .ts { font-size:11px; color:var(--text-muted); }
+.hero { font-size:52px; font-weight:650; line-height:1; font-variant-numeric:tabular-nums; } .hero small { font-size:14px; font-weight:500; color:var(--text-muted); }
+.status { display:inline-flex; align-items:center; gap:6px; color:var(--text-secondary); font-weight:600; }
+.status .icon { display:inline-grid; place-items:center; width:18px; height:18px; border-radius:50%; color:#fff; font-size:11px; flex:none; }
+.status.good .icon { background:var(--good); } .status.warning .icon { background:var(--warning); color:#0b0b0b; } .status.critical .icon { background:var(--critical); } .status.info .icon { background:var(--series-1); }
+.reasons { margin:8px 0; padding-left:18px; } .reasons li { margin:2px 0; }
+.acts .act:nth-child(n+6) { display:none; } .acts.all .act { display:flex !important; }
+.act { display:flex; gap:8px; align-items:flex-start; padding:6px 0; border-bottom:1px solid var(--grid); font-size:13px; } .act .status { margin-top:1px; }
+@media (max-width: 900px) { .summary { grid-template-columns:1fr; } .kpis { grid-template-columns:repeat(2,minmax(0,1fr)); } .acts .act:nth-child(n+4) { display:none; } .hero { font-size:40px; } }
+.tablewrap { overflow-x:auto; }
+table { border-collapse:collapse; width:100%; font-size:12px; font-variant-numeric:tabular-nums; }
+th { text-align:left; color:var(--text-secondary); font-weight:600; border-bottom:1px solid var(--border); padding:5px 8px; white-space:nowrap; }
+td { border-bottom:1px solid var(--grid); padding:4px 8px; overflow-wrap:anywhere; vertical-align:top; }
+tr.top td { background:var(--top); } tr.more { display:none; } .tablewrap.all tr.more { display:table-row; }
+td.rank { color:var(--text-muted); width:1%; } code { font-size:11px; }
+.chart { width:100%; height:auto; display:block; }
+.grid { stroke:var(--grid); stroke-width:1; } .base { stroke:var(--text-muted); stroke-width:1; } .band { stroke:var(--text-muted); stroke-width:1; stroke-dasharray:3 3; }
+.axis { fill:var(--text-muted); font-size:10px; } .ptitle { fill:var(--text-secondary); font-size:11px; font-weight:600; } .vlabel { fill:var(--text-secondary); font-size:10px; }
+.col { fill:var(--series-1); } .hit { fill:transparent; } .line { fill:none; stroke:var(--text-secondary); stroke-width:2; }
+.q-green { fill:var(--good); } .q-yellow { fill:var(--warning); } .q-red { fill:var(--critical); } .dot { stroke:var(--surface-1); stroke-width:2; }
+.tier-engaged { fill:var(--tier-e); } .tier-light { fill:var(--tier-l); } .tier-passive { fill:var(--tier-p); }
+.f-up { fill:var(--up); } .f-new { fill:var(--new); } .f-down { fill:var(--down); } .f-drop { fill:var(--drop); } .f-nr { fill:var(--nr); }
+.out-of-period { opacity:.25; } tr.out-of-period { display:none; }
+.legend { display:flex; flex-wrap:wrap; align-items:center; gap:4px 12px; font-size:11px; margin-top:6px; color:var(--text-muted); }
+.sw { width:12px; height:10px; border-radius:2px; display:inline-block; margin-right:4px; vertical-align:-1px; }
+.hrow { display:grid; grid-template-columns:minmax(110px,34%) 1fr 54px; align-items:center; gap:8px; padding:2px 0; font-size:12px; }
+.hl { color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .track { height:11px; }
+.hbar { display:block; height:11px; background:var(--series-1); border-radius:0 4px 4px 0; min-width:2px; } .hbar.nr { background:var(--nr); } .hv { text-align:right; }
+.names { margin-top:6px; font-size:12px; min-height:18px; }
+.pick { cursor:pointer; }
+.period-controls { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:6px 0; font-size:12px; }
+.period-controls input { background:var(--surface-0); color:var(--text-primary); border:1px solid var(--border); border-radius:6px; padding:2px 6px; }
+.badge { font-size:11px; padding:1px 8px; border-radius:10px; border:1px solid var(--border); }
+#tip { position:fixed; pointer-events:none; background:var(--text-primary); color:var(--surface-1); padding:5px 8px; border-radius:6px; font-size:12px; opacity:0; z-index:9; max-width:420px; }
+.err { padding:40px; font-size:16px; }
+</style></head>
+<body><div class="viz-root">
+<nav class="topnav"><div class="in">
+  <a href="#summary">Summary</a><a href="#people">People</a><a href="#did">What they did</a><a href="#data">Data</a><a href="#appendix">Appendix</a>
+  <span class="sp"></span>
+  <details class="filter" id="filter"><summary class="btn" id="filter-label">Hide users</summary><div class="pop" id="filter-pop"></div></details>
+  <button type="button" data-fold="open">Expand all</button><button type="button" data-fold="close">Collapse all</button><button type="button" id="theme">Theme</button>
+</div></nav>
+<main id="app"></main><div id="tip" role="tooltip"></div></div>
+<script src="report.data.js"></script>
+<script>
+"use strict";
+const D = window.REPORT;
+const app = document.getElementById('app');
+if (!D) { app.innerHTML = '<div class="err">report.data.js not found next to this file. Run <code>python3 report.py</code>.</div>'; throw new Error('no data'); }
+const M = D.meta, C = D.constants, DAY = 864e5, MIN = 6e4;
+const KEY = 'pov-hidden:' + M.domain;
+let hidden = new Set(JSON.parse(localStorage.getItem(KEY) || '[]').filter(i => i < D.users.length));
+const TIERS = ['Engaged', 'Light', 'Passive'], RANK = {Engaged: 3, Light: 2, Passive: 1};
+const trivial = D.caps.map(c => c.trivial);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const uname = i => typeof i === 'number' ? D.users[i] : i;
+const short = i => uname(i).split('@')[0];
+const pad = n => String(n).padStart(2, '0');
+const tzParts = ms => Object.fromEntries(new Intl.DateTimeFormat('en-US', {timeZone: M.tz, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'}).formatToParts(new Date(ms)).map(p => [p.type, p.value]));
+const fmtTs = ms => { if (!ms) return '-'; const p = tzParts(ms); return `${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}`; };
+const fmtD = ms => ms ? fmtTs(ms).slice(0, 10) : '-';
+const wkLabel = date => new Date(date + 'T00:00:00Z').toLocaleDateString('en-US', {month: 'short', day: '2-digit', timeZone: 'UTC'});
+const addDays = (date, n) => { const d = new Date(date + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+const decay = (age, hl = C.half_life_days) => Math.pow(0.5, Math.max(age, 0) / DAY / hl);
+const dr = (x, k) => 1 - Math.exp(-x / k);
+const r1 = x => Math.round(x * 10) / 10;
+const weekIdx = ms => { for (let i = D.weeks.length - 1; i >= 0; i--) if (ms >= D.weeks[i].start) return i; return -1; };
+const tierOf = (real, hw, b) => (real >= C.tier_engaged_min || ((hw || b) && real >= C.tier_light_min)) ? 'Engaged' : (real >= C.tier_light_min || hw || b) ? 'Light' : 'Passive';
+
+// ---------- the model (a port of pov.py; parity with Python is checked on load) ----------
+function tiers(ev, bu, lo, bucket) {
+  const m = new Map();
+  const get = (u, b) => { const k = u + '|' + b; let d = m.get(k); if (!d) { d = {u, b, real: new Set(), caps: new Set(), hw: 0, builds: 0, last: 0}; m.set(k, d); } return d; };
+  for (const r of ev) { const d = get(r[0], bucket === 'week' ? r[7] : bucket); d.last = Math.max(d.last, r[1] * MIN); if (!trivial[r[2]]) { d.real.add(r[1]); d.caps.add(r[2]); } d.hw += r[3]; }
+  for (const r of bu) { const d = get(r[0], bucket === 'week' ? weekIdx(r[1]) : bucket); d.builds++; d.last = Math.max(d.last, r[1]); }
+  for (const r of lo) { const d = get(r[0], bucket === 'week' ? weekIdx(r[1]) : bucket); d.last = Math.max(d.last, r[1]); }
+  for (const d of m.values()) d.tier = tierOf(d.real.size, d.hw, d.builds);
+  return m;
+}
+function quality(engaged, active, nw, converted, droppedEng = 0) {
+  if (converted >= 3 && engaged >= 3) return ['green', `Green: ${converted} users moved up to engaged (${engaged} engaged of ${active} active)`];
+  if (engaged >= 3 && engaged >= 0.4 * active) return ['green', `Green: ${engaged} of ${active} active users engaged`];
+  if (engaged === 0) return ['red', active === 0 ? 'Red: nobody active' : `Red: ${active} active, none engaged`];
+  if (nw >= 5) return ['yellow', `Yellow: ${nw} new users enrolled, only ${engaged} engaged`];
+  return ['yellow', `Yellow: ${engaged} engaged of ${active} active` + (droppedEng ? `, ${droppedEng} engaged user${droppedEng > 1 ? 's' : ''} dropped back` : '')];
+}
+function score(t, X) {
+  const ev = X.ev.filter(r => r[1] * MIN < t), bu = X.bu.filter(r => r[1] < t), lo = X.lo.filter(r => r[1] < t), ms = X.ms.filter(r => r[0] < t);
+  const tm = tiers(ev, bu, lo, 'week');
+  const best = new Map();
+  for (const d of tm.values()) best.set(d.u, Math.max(best.get(d.u) || 0, C.tier_weight[d.tier] * decay(t - d.last)));
+  const people = [...best.values()].reduce((a, b) => a + b, 0);
+  const all = new Set(), real = new Set(), byUser = new Map(), byCap = new Map();
+  for (const r of ev) { all.add(r[0] + ':' + r[1]); if (!trivial[r[2]]) { real.add(r[0] + ':' + r[1]); byCap.set(r[2], (byCap.get(r[2]) || 0) + decay(t - r[1] * MIN)); } }
+  let depth = 0;
+  for (const k of real) { const [u, m] = k.split(':').map(Number); const w = decay(t - m * MIN); depth += w; byUser.set(u, (byUser.get(u) || 0) + w); }
+  const breadth = [...byCap.values()].reduce((a, v) => a + Math.min(1, v / C.cap_full_minutes), 0);
+  const building = bu.reduce((a, r) => a + (r[2] ? 0.5 : 1) * decay(t - r[1]), 0);
+  const momentum = ms.reduce((a, r) => a + r[1] * decay(t - r[0], C.milestone_half_life_days), 0);
+  const raw = {People: people, Depth: depth, Breadth: breadth, Building: building, Momentum: momentum};
+  const parts = {}; let base = 0;
+  for (const k of Object.keys(C.weights)) { parts[k] = C.weights[k] * dr(raw[k], C.k[k]); base += parts[k]; }
+  let topU = null, topW = 0; for (const [u, w] of byUser) if (w > topW) { topU = u; topW = w; }
+  const topShare = depth ? topW / depth : 0, conc = 1 - Math.max(0, topShare - 0.5);
+  const s30 = t - 30 * DAY;
+  let p = 0; for (const k of all) { const m = +k.split(':')[1]; if (m * MIN >= s30) p += decay(t - m * MIN); }
+  let n = 0; for (const r of X.nr) if (r[1] >= s30 && r[1] < t) n += r[2] * decay(t - r[1]);
+  const share = p + n ? p / (p + n) : 0, shareF = 0.5 + Math.min(share, 0.5);
+  const wk = weekIdx(t - 1); let sust = 0;
+  for (const w of [wk, wk - 1, wk - 2]) { let e = 0; for (const d of tm.values()) if (d.b === w && d.tier === 'Engaged') e++; if (e >= C.sustain_min_engaged) sust++; }
+  const sustF = 0.7 + 0.1 * sust;
+  const last = ms.length ? Math.max(...ms.map(r => r[0])) : null;
+  const stalled = (t - M.start_ms >= C.stall_after_days * DAY) && (last === null || t - last > C.stall_window_days * DAY);
+  const stallF = stalled ? C.stall_factor : 1;
+  const sc = base * conc * shareF * sustF * stallF;
+  return {score: Math.round(sc), base: r1(base), parts: Object.fromEntries(Object.entries(parts).map(([k, v]) => [k, r1(v)])), raw,
+          conc: Math.round(conc * 100) / 100, topU, topShare, shareF: Math.round(shareF * 100) / 100, share, sustF: Math.round(sustF * 100) / 100, sust, stallF, last};
+}
+function compute() {
+  const keep = i => !hidden.has(i);
+  const X = {ev: D.ev.filter(r => keep(r[0])), bu: D.builds.filter(r => keep(r[0])), lo: D.logins.filter(r => keep(r[0])),
+             ms: D.milestones.filter(r => r[4] < 0 || keep(r[4])), nr: D.nr.filter(r => keep(r[0]))};
+  const asOf = M.as_of, tm = tiers(X.ev, X.bu, X.lo, 'week');
+  const byWeek = D.weeks.map(() => new Map());
+  for (const d of tm.values()) if (d.b >= 0) byWeek[d.b].set(d.u, d.tier);
+  const firstSeen = new Map(); byWeek.forEach((m, i) => { for (const u of m.keys()) if (!firstSeen.has(u)) firstSeen.set(u, i); });
+  const evWeek = D.weeks.map(() => ({users: new Set(), minutes: new Set()}));
+  for (const r of X.ev) { evWeek[r[7]].users.add(r[0]); evWeek[r[7]].minutes.add(r[0] + ':' + r[1]); }
+  let seen = new Set(), prevActive = new Set(), prev = new Map();
+  const weekly = D.weeks.map((w, i) => {
+    const t = Math.min(w.end, asOf), detail = score(t, X), cur = byWeek[i], a = evWeek[i].users;
+    const row = {i, date: w.date, score: detail.score, detail, active: a.size, minutes: evWeek[i].minutes.size,
+                 new_: [...a].filter(u => !seen.has(u)).length, lapsed: [...prevActive].filter(u => !a.has(u)).length,
+                 who: [...a].map(short).sort(), tiers: Object.fromEntries(TIERS.map(k => [k, [...cur].filter(([, t]) => t === k).map(([u]) => u)])),
+                 tr: {new_: 0, newEng: 0, up: 0, toEng: 0, same: 0, down: 0, dropped: 0, droppedEng: 0}, gb: D.ingest[i].gb};
+    for (const [u, t2] of cur) {
+      if (firstSeen.get(u) === i) { row.tr.new_++; if (t2 === 'Engaged') row.tr.newEng++; continue; }
+      const a0 = RANK[prev.get(u)] || 0, a1 = RANK[t2];
+      if (a1 > a0) { row.tr.up++; if (t2 === 'Engaged') row.tr.toEng++; } else if (a1 < a0) row.tr.down++; else row.tr.same++;
+    }
+    for (const [u, t2] of prev) if (!cur.has(u)) { row.tr.dropped++; if (t2 === 'Engaged') row.tr.droppedEng++; }
+    const eng = row.tiers.Engaged.length;
+    [row.colour, row.reason] = quality(eng, cur.size, row.tr.new_, row.tr.toEng, row.tr.droppedEng);
+    for (const u of a) seen.add(u); prevActive = a; prev = cur;
+    return row;
+  });
+  const lastW = D.weeks.length - 1;
+  const cohorts = D.weeks.map((w, i) => {
+    const members = [...firstSeen].filter(([, f]) => f === i).map(([u]) => u); if (!members.length) return null;
+    const ranks = members.map(u => Math.max(...byWeek.slice(i).map(m => RANK[m.get(u)] || 0)));
+    return {date: w.date, size: members.length, light: ranks.filter(r => r >= 2).length, engaged: ranks.filter(r => r >= 3).length,
+            now: members.filter(u => byWeek[lastW].get(u) === 'Engaged').length};
+  }).filter(Boolean);
+  const now = score(asOf, X);
+  const l7 = tiers(X.ev.filter(r => r[1] * MIN >= asOf - 7 * DAY), X.bu.filter(r => r[1] >= asOf - 7 * DAY), X.lo.filter(r => r[1] >= asOf - 7 * DAY), 'now');
+  const before = new Set([...tm.values()].filter(d => d.b >= 0 && D.weeks[d.b].start < asOf - 7 * DAY).map(d => d.u));
+  const eng7 = [...l7.values()].filter(d => d.tier === 'Engaged').length;
+  [now.colour, now.reason] = quality(eng7, l7.size, [...l7.values()].filter(d => !before.has(d.u)).length, 0);
+  if (now.reason === 'Red: nobody active') now.reason = 'Red: nobody from the prospect active in the last 7 days';
+  const since = M.since, w30 = X.ev.filter(r => r[1] * MIN >= since);
+  const lastMin = X.ev.reduce((a, r) => r[1] > a[1] ? r : a, [null, 0]);
+  const p30 = new Set(w30.map(r => r[0] + ':' + r[1])).size, n30 = X.nr.filter(r => r[1] >= since).reduce((a, r) => a + r[2], 0);
+  const fullWeeks = weekly.filter(w => D.weeks[w.i].end <= asOf), lfw = fullWeeks[fullWeeks.length - 1];
+  return {X, tm, weekly, cohorts, now, w30, kpi: {
+    active7: new Set(X.ev.filter(r => r[1] * MIN >= asOf - 7 * DAY).map(r => r[0])).size, active30: new Set(w30.map(r => r[0])).size,
+    lastMs: lastMin[0] === null ? null : lastMin[1] * MIN, lastWho: lastMin[0], share30: p30 + n30 ? p30 / (p30 + n30) : null,
+    lfw}};
+}
+function period(weekly, a, b) {
+  const ws = weekly.filter(w => w.date <= b && addDays(w.date, 6) >= a);
+  if (!ws.length) return null;
+  const sc = ws.map(w => w.score), last = sc.slice(-4), n = last.length, m = last.reduce((x, y) => x + y, 0) / n;
+  const slope = n > 1 ? last.reduce((acc, v, i) => acc + (i - (n - 1) / 2) * (v - m), 0) / last.reduce((acc, _, i) => acc + (i - (n - 1) / 2) ** 2, 0) : 0;
+  const c = {green: 0, yellow: 0, red: 0}; ws.forEach(w => c[w.colour]++);
+  const col = c.green * 2 >= ws.length ? 'green' : c.red * 2 >= ws.length ? 'red' : 'yellow';
+  return {weeks: ws.length, mean: Math.round(sc.reduce((x, y) => x + y, 0) / sc.length), min: Math.min(...sc), max: Math.max(...sc),
+          trend: slope > 3 ? 'rising' : slope < -3 ? 'falling' : 'flat', slope, colour: col, reason: `${col[0].toUpperCase() + col.slice(1)}: ${c.green} green, ${c.yellow} yellow, ${c.red} red weeks`};
+}
+const band = s => s >= C.band_strong ? ['good', 'Strong'] : s >= C.band_partial ? ['warning', 'Partial'] : ['critical', 'Weak'];
+const bandText = s => { const [, b] = band(s); return `${b} band is ${b === 'Strong' ? C.band_strong + '–100' : b === 'Partial' ? C.band_partial + '–' + (C.band_strong - 1) : '0–' + (C.band_partial - 1)}; Strong is ${C.band_strong}+`; };
+const QCLS = {green: 'good', yellow: 'warning', red: 'critical'}, QICON = {green: '&#10003;', yellow: '!', red: '&#10005;', info: 'i'};
+const ICON = {good: '&#10003;', warning: '!', critical: '&#10005;', info: 'i'};
+const chip = (colour, text) => `<span class="status ${QCLS[colour] || colour}"><span class="icon">${QICON[colour] || ICON[colour]}</span> ${esc(text)}</span>`;
+
+// ---------- components ----------
+function table(cols, rows, {top = 5, rank = true, hi = 3} = {}) {
+  if (!rows.length) return '<p class="muted small">No data.</p>';
+  const id = 't' + Math.random().toString(36).slice(2, 8);
+  const body = rows.map((r, i) => `<tr class="${i < hi && rank ? 'top' : ''} ${i >= top ? 'more' : ''}">${rank ? `<td class="rank">${i + 1}</td>` : ''}${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('');
+  return `<div class="tablewrap" id="${id}"><table><thead><tr>${rank ? '<th>#</th>' : ''}${cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table>`
+       + (rows.length > top ? `<button type="button" class="showall" data-t="${id}">Show all ${rows.length}</button>` : '') + '</div>';
+}
+function fold(summary, inner, render) {
+  return `<details class="fold"${render ? ` data-render="${render}"` : ''}><summary>${esc(summary)}</summary><div class="fold-body">${inner || ''}</div></details>`;
+}
+function hbars(items, unit, cls = '', maxv) {
+  maxv = maxv || Math.max(1, ...items.map(x => x[1]));
+  return items.map(([l, v]) => `<div class="hrow" data-tip="${esc(l)}: ${v} ${unit}"><span class="hl">${esc(l)}</span><span class="track"><span class="hbar ${cls}" style="width:${100 * v / maxv}%"></span></span><span class="hv">${v}</span></div>`).join('') || '<p class="muted small">No data.</p>';
+}
+function columns(series, {unit, names, id, maxv, w = 760, h = 170, every = 1, cls = 'col', label = x => x, weekly = false}) {
+  const pl = 30, pb = 20, pt = 8, n = series.length, step = (w - pl) / n, bw = Math.max(step - 2, 1), ph = h - pt - pb;
+  maxv = maxv || Math.max(1, ...series.map(s => s[1]));
+  let o = [0, Math.round(maxv / 2), maxv].map(t => `<line class="grid" x1="${pl}" x2="${w}" y1="${pt + ph * (1 - t / maxv)}" y2="${pt + ph * (1 - t / maxv)}"/><text class="axis" x="${pl - 5}" y="${pt + ph * (1 - t / maxv) + 4}" text-anchor="end">${t}</text>`).join('');
+  series.forEach(([d, v, extra], i) => {
+    const x = pl + i * step, bh = ph * v / maxv;
+    const pick = names && v ? ` class="pick" data-panel="${id}-n" data-label="${esc(label(d))}" data-names="${esc(names[i])}"` : '';
+    o += `<g data-tip="${esc(label(d))}: ${v} ${unit}${extra ? '. ' + esc(extra) : ''}"${pick} ${weekly ? `data-week="${d}"` : ''}><rect class="hit" x="${x}" y="${pt}" width="${step}" height="${ph}"/>${v ? `<rect class="${cls}" x="${x}" y="${pt + ph - bh}" width="${bw}" height="${bh}" rx="3"/>` : ''}</g>`;
+    if (i % every === 0) o += `<text class="axis" x="${x + bw / 2}" y="${h - 5}" text-anchor="middle">${esc(label(d))}</text>`;
+  });
+  return `<svg viewBox="0 0 ${w} ${h}" class="chart" role="img">${o}<line class="base" x1="${pl}" x2="${w}" y1="${pt + ph}" y2="${pt + ph}"/></svg>` + (names ? `<div class="names" id="${id}-n"><span class="muted">Click a column for names.</span></div>` : '');
+}
+function weeklyCombined(weekly) {
+  // Two panels on one shared week axis (no dual axis): the score on top, people by tier below.
+  const w = 760, pl = 34, n = weekly.length, step = (w - pl) / n, bw = Math.max(step - 6, 1);
+  const top = 22, h1 = 120, gap = 34, h2 = 120, H = top + h1 + gap + h2 + 22;
+  const y1 = v => top + h1 * (1 - v / 100), maxU = Math.max(1, ...weekly.map(x => x.tiers.Engaged.length + x.tiers.Light.length + x.tiers.Passive.length));
+  let o = `<text class="ptitle" x="${pl}" y="12">Engagement score (0–100), dot colour = quality</text>`;
+  for (const t of [0, C.band_partial, C.band_strong, 100]) o += `<line class="${t && t < 100 ? 'band' : 'grid'}" x1="${pl}" x2="${w}" y1="${y1(t)}" y2="${y1(t)}"/><text class="axis" x="${pl - 5}" y="${y1(t) + 4}" text-anchor="end">${t}</text>`;
+  o += `<text class="axis" x="${pl + 4}" y="${y1(C.band_strong) - 3}">Strong ${C.band_strong}+</text><text class="axis" x="${pl + 4}" y="${y1(C.band_partial) - 3}">Partial ${C.band_partial}+</text>`;
+  const pts = weekly.map((x, i) => [pl + i * step + step / 2, y1(x.score)]);
+  o += `<path class="line" d="M${pts.map(p => p.join(',')).join(' L')}"/>`;
+  const sMax = Math.max(...weekly.map(x => x.score)), last = weekly.length - 1;
+  weekly.forEach((x, i) => {
+    const d = x.detail, tip = `${wkLabel(x.date)}: score ${x.score}. ${x.reason}. ` + Object.entries(d.parts).map(([k, v]) => `${k} ${v}/${C.weights[k]}`).join(', ') + `; ×${d.conc} ×${d.shareF} ×${d.sustF}` + (d.stallF < 1 ? ` ×${d.stallF}` : '');
+    o += `<g data-week="${x.date}" data-tip="${esc(tip)}"><rect class="hit" x="${pl + i * step}" y="${top}" width="${step}" height="${h1}"/><circle class="dot q-${x.colour}" cx="${pts[i][0]}" cy="${pts[i][1]}" r="6"/>`
+       + ((x.score === sMax || i === last) ? `<text class="vlabel" x="${pts[i][0]}" y="${pts[i][1] - 10}" text-anchor="middle">${x.score}</text>` : '') + '</g>';
+  });
+  const t2 = top + h1 + gap, y2 = v => t2 + h2 * (1 - v / maxU);
+  o += `<text class="ptitle" x="${pl}" y="${t2 - 10}">People active each week, by how deeply (Engaged / Light / Passive)</text>`;
+  for (const t of [0, Math.round(maxU / 2), maxU]) o += `<line class="grid" x1="${pl}" x2="${w}" y1="${y2(t)}" y2="${y2(t)}"/><text class="axis" x="${pl - 5}" y="${y2(t) + 4}" text-anchor="end">${t}</text>`;
+  weekly.forEach((x, i) => {
+    let y = t2 + h2; const xx = pl + i * step + 3;
+    for (const k of TIERS) {
+      const v = x.tiers[k].length; if (!v) continue;
+      const sh = h2 * v / maxU; y -= sh;
+      o += `<rect class="tier-${k.toLowerCase()} pick" data-week="${x.date}" x="${xx}" y="${y + 1}" width="${bw}" height="${Math.max(sh - 2, 1)}" rx="2" data-tip="${esc(wkLabel(x.date))}, ${k}: ${v}" data-panel="wc-n" data-label="${esc(wkLabel(x.date))}, ${k}" data-names="${esc(x.tiers[k].map(short).join(', '))}"/>`;
+    }
+    o += `<text class="axis" x="${pl + i * step + step / 2}" y="${H - 5}" text-anchor="middle">${esc(wkLabel(x.date))}</text>`;
+  });
+  o += `<line class="base" x1="${pl}" x2="${w}" y1="${t2 + h2}" y2="${t2 + h2}"/>`;
+  return `<svg viewBox="0 0 ${w} ${H}" class="chart" role="img">${o}</svg>
+<div class="legend"><span><span class="sw" style="background:var(--good)"></span>&#10003; green</span><span><span class="sw" style="background:var(--warning)"></span>! yellow</span><span><span class="sw" style="background:var(--critical)"></span>&#10005; red quality</span>
+<span>·</span>${TIERS.map(k => `<span><span class="sw tier-sw" style="background:var(--tier-${k[0].toLowerCase()})"></span>${k}</span>`).join('')}</div>
+<div class="names" id="wc-n"><span class="muted">Hover a week for its score parts; click a bar segment for names.</span></div>`;
+}
+function progressionChart(weekly) {
+  // Diverging columns: arrivals and moves up above the line, moves down and drop-outs below.
+  const w = 760, pl = 34, h = 200, n = weekly.length, step = (w - pl) / n, bw = Math.max(step - 6, 1), mid = 100;
+  const upMax = Math.max(1, ...weekly.map(x => x.tr.new_ + x.tr.up)), dnMax = Math.max(1, ...weekly.map(x => x.tr.down + x.tr.dropped)), mx = Math.max(upMax, dnMax), sc = 85 / mx;
+  let o = `<line class="base" x1="${pl}" x2="${w}" y1="${mid}" y2="${mid}"/><text class="axis" x="${pl - 5}" y="${mid - 85 + 4}" text-anchor="end">+${mx}</text><text class="axis" x="${pl - 5}" y="${mid + 85 + 4}" text-anchor="end">−${mx}</text>`;
+  weekly.forEach((x, i) => {
+    const xx = pl + i * step + 3, t = x.tr; let y = mid;
+    for (const [v, cls, lab] of [[t.up, 'f-up', 'moved up'], [t.new_, 'f-new', 'new']]) { if (!v) continue; y -= v * sc; o += `<rect class="${cls}" data-week="${x.date}" x="${xx}" y="${y + 1}" width="${bw}" height="${Math.max(v * sc - 2, 1)}" rx="2" data-tip="${esc(wkLabel(x.date))}: ${v} ${lab}${lab === 'moved up' ? ` (${t.toEng} to engaged)` : ` (${t.newEng} engaged)`}"/>`; }
+    y = mid;
+    for (const [v, cls, lab] of [[t.down, 'f-down', 'moved down'], [t.dropped, 'f-drop', 'dropped out']]) { if (!v) continue; o += `<rect class="${cls}" data-week="${x.date}" x="${xx}" y="${y + 1}" width="${bw}" height="${Math.max(v * sc - 2, 1)}" rx="2" data-tip="${esc(wkLabel(x.date))}: ${v} ${lab}${lab === 'dropped out' ? ` (${t.droppedEng} were engaged)` : ''}"/>`; y += v * sc; }
+    o += `<text class="axis" x="${pl + i * step + step / 2}" y="${h - 4}" text-anchor="middle">${esc(wkLabel(x.date))}</text>`;
+  });
+  return `<svg viewBox="0 0 ${w} ${h}" class="chart" role="img">${o}</svg><div class="legend"><span><span class="sw" style="background:var(--new)"></span>new</span><span><span class="sw" style="background:var(--up)"></span>moved up a tier</span><span><span class="sw" style="background:var(--down)"></span>moved down</span><span><span class="sw" style="background:var(--drop)"></span>dropped out</span></div>`;
+}
+function heatmap(cells) {
+  const ramp = ['#cde2fb', '#9ec5f4', '#6da7ec', '#3987e5', '#256abf', '#184f95', '#0d366b'], days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const mx = Math.max(1, ...Object.values(cells)), cw = 28, ch = 20, pl = 38, pt = 16;
+  let o = ''; for (let h = 0; h < 24; h += 3) o += `<text class="axis" x="${pl + h * cw + cw / 2}" y="11" text-anchor="middle">${pad(h)}</text>`;
+  for (let d = 0; d < 7; d++) { o += `<text class="axis" x="${pl - 6}" y="${pt + d * ch + 14}" text-anchor="end">${days[d]}</text>`;
+    for (let h = 0; h < 24; h++) { const v = cells[d + ':' + h] || 0; o += `<rect x="${pl + h * cw}" y="${pt + d * ch}" width="${cw - 2}" height="${ch - 2}" rx="3" fill="${v ? ramp[Math.min(Math.floor(ramp.length * v / (mx + 1e-9)), ramp.length - 1)] : 'var(--empty)'}" data-tip="${days[d]} ${pad(h)}:00, ${v} active user-minutes"/>`; } }
+  return `<svg viewBox="0 0 ${pl + 24 * cw} ${pt + 7 * ch}" class="chart">${o}</svg><div class="legend">fewer ${ramp.map(c => `<span class="sw" style="background:${c}"></span>`).join('')} more (max ${mx})</div>`;
+}
+function timeline(ms) {
+  const kinds = [...new Set(ms.map(m => m[2]))].sort(), w = 760, pl = 150, lane = 22, pt = 8, h = pt + lane * kinds.length + 22;
+  const x = t => pl + (w - pl - 10) * (t - M.start_ms) / Math.max(M.as_of - M.start_ms, 1);
+  let o = '';
+  kinds.forEach((k, i) => { const y = pt + lane * i + lane / 2; o += `<text class="axis" x="${pl - 8}" y="${y + 4}" text-anchor="end">${esc(k)}</text><line class="grid" x1="${pl}" x2="${w - 10}" y1="${y}" y2="${y}"/>`;
+    ms.filter(m => m[2] === k).forEach(m => { o += `<circle class="dot" style="fill:var(--series-1)" cx="${x(m[0])}" cy="${y}" r="5" data-tip="${esc(fmtD(m[0]) + ': ' + k + ', ' + (m[4] >= 0 ? short(m[4]) : m[3]))}"/>`; }); });
+  for (let i = 0; i < D.weeks.length; i += 2) o += `<text class="axis" x="${x(D.weeks[i].start)}" y="${h - 5}" text-anchor="middle">${esc(wkLabel(D.weeks[i].date))}</text>`;
+  return `<svg viewBox="0 0 ${w} ${h}" class="chart">${o}</svg>`;
+}
+
+// ---------- views ----------
+let S, lazy = {};
+function reasons(s, k) {
+  const out = [];
+  if (!k.lastMs || M.as_of - k.lastMs >= 7 * DAY) out.push(k.lastMs ? `Nobody from ${M.domain} has used New Relic for ${Math.round((M.as_of - k.lastMs) / DAY)} days (last: ${short(k.lastWho)}, ${fmtD(k.lastMs)}).` : `Nobody from ${M.domain} has used New Relic yet.`);
+  const m = [];
+  if (s.conc < 0.95) m.push([s.conc, `One person (${short(s.topU)}) does ${Math.round(s.topShare * 100)}% of the real work.`]);
+  if (s.shareF < 0.95) m.push([s.shareF, `New Relic staff do most of the clicking: the prospect is ${Math.round(s.share * 100)}% of recent UI time (${k.share30 === null ? '-' : Math.round(k.share30 * 100) + '%'} over ${M.window_days} days).`]);
+  if (s.sustF < 0.95) m.push([s.sustF, `${s.sust ? 'Only ' + s.sust : 'None'} of the last 3 weeks had ${C.sustain_min_engaged}+ engaged people.`]);
+  if (s.stallF < 1) m.push([s.stallF, `No new data source, data type or ingest key since ${s.last ? fmtD(s.last) : 'the start'}.`]);
+  m.sort((a, b) => a[0] - b[0]).forEach(x => out.push(x[1]));
+  return out.slice(0, 3);
+}
+function renderSummary() {
+  const s = S.now, k = S.kpi, [bc, bl] = band(s.score);
+  const parts = Object.entries(s.parts).map(([n, v]) => `<tr><td><b>${n}</b></td><td>${v} / ${C.weights[n]}</td></tr>`).join('');
+  const mults = [[s.conc, `${short(s.topU) || '-'} does ${Math.round(s.topShare * 100)}% of recent real activity (1.0 up to 50%)`], [s.shareF, `the prospect is ${Math.round(s.share * 100)}% of recent UI time vs New Relic staff (1.0 at 50%+)`],
+                 [s.sustF, `${s.sust} of the last 3 weeks had ${C.sustain_min_engaged}+ engaged users`]].concat(s.stallF < 1 ? [[s.stallF, `no new milestone for ${C.stall_window_days}+ days, ${Math.round(C.stall_after_days / 7)}+ weeks in`]] : []);
+  const acts = D.actions.slice().sort((a, b) => ['critical', 'warning', 'info', 'good'].indexOf(a[0]) - ['critical', 'warning', 'info', 'good'].indexOf(b[0]));
+  const lfw = k.lfw;
+  return `<section id="summary"><div class="summary">
+<div class="card"><h3>Engagement score now</h3>
+<div class="hero">${s.score}<small> / 100 · ${bl}</small></div>
+<div style="margin:6px 0">${chip(s.colour, s.reason)}</div>
+<ul class="reasons">${reasons(s, k).map(r => `<li>${esc(r)}</li>`).join('') || '<li>No major gaps.</li>'}</ul>
+${hidden.size ? `<p class="small muted">Recomputed in the browser without ${hidden.size} hidden user${hidden.size > 1 ? 's' : ''}.</p>` : ''}
+<details class="fold"><summary>Show the arithmetic</summary><div class="fold-body"><table>${parts}<tr><td>Subtotal</td><td>${s.base} / 100</td></tr>${mults.map(([f, why]) => `<tr><td>× ${f.toFixed(2)}</td><td>${esc(why)}</td></tr>`).join('')}<tr><td><b>Score</b></td><td><b>${s.score}</b> / 100</td></tr></table>
+<p class="small muted">Each part = max × (1 − e<sup>−x/k</sup>) over recency-weighted inputs (half-life ${C.half_life_days} days; milestones ${C.milestone_half_life_days} days). k: ${Object.entries(C.k).map(([a, b]) => a + ' ' + b).join(', ')}. People weights: engaged 1, light ${C.tier_weight.Light}, passive ${C.tier_weight.Passive}. Full formula in the README.</p></div></details>
+<details class="fold"><summary>&#9432; How to read this score</summary><div class="fold-body small"><p>${esc(D.text.reading_guide)}</p>
+<p>${chip('good', `${C.band_strong}–100 Strong: several people testing in depth every week`)}<br>${chip('warning', `${C.band_partial}–${C.band_strong - 1} Partial: real testing, but thin, one-person or New Relic-led`)}<br>${chip('critical', `0–${C.band_partial - 1} Weak: a champion alone, glances, or nobody lately`)}</p>
+<p class="muted">How the bands were chosen: ${esc(D.text.bands_how)}</p></div></details></div>
+<div class="card"><h3>What to do next</h3><div class="acts" id="acts">${acts.map(([lvl, msg, nxt]) => `<div class="act">${chip(lvl, '')}<div><b>${esc(msg)}</b><br><span class="muted">${esc(nxt)}</span></div></div>`).join('')}</div>
+<button type="button" id="acts-all" class="small" style="margin-top:6px">Show all ${acts.length}</button>
+${hidden.size ? '<p class="small muted">Actions were generated by Python without your filters.</p>' : ''}</div></div>
+<div class="kpis">
+<div class="tile"><div class="tl">Active users, last 7 days</div><div class="tv">${k.active7}</div><div class="ts">${k.active30} in ${M.window_days} days (UI only)</div></div>
+<div class="tile"><div class="tl">Last prospect activity</div><div class="tv">${k.lastMs ? Math.round((M.as_of - k.lastMs) / DAY) + ' days ago' : 'never'}</div><div class="ts">${k.lastMs ? esc(short(k.lastWho)) + ', ' + fmtD(k.lastMs) : ''}</div></div>
+<div class="tile"><div class="tl">Prospect share of UI time, ${M.window_days}d</div><div class="tv">${k.share30 === null ? '-' : Math.round(k.share30 * 100) + '%'}</div><div class="ts">New Relic staff do the rest</div></div>
+<div class="tile"><div class="tl">Ingest vs use, last full week</div><div class="tv">${lfw ? (lfw.gb / 1000).toFixed(1) + ' TB' : '-'}</div><div class="ts">${lfw ? `${lfw.active} active, ${lfw.tiers.Engaged.length} engaged (w/c ${wkLabel(lfw.date)})` : ''}</div></div>
+</div></section>`;
+}
+function renderPeople() {
+  const W = S.weekly, f = D.funnel;
+  return `<h2 id="people">People</h2>
+<details class="card" open><summary>Score and people, week by week</summary>
+<p class="small muted">${esc(D.text.weekly_guide)} Top: the overall score (0–100) at the end of each week, coloured by quality. Bottom: how many people were active each week, and how deeply.</p>
+${weeklyCombined(W)}
+<div class="period-controls"><b>PoV period</b> <label>from <input type="date" id="p-start" value="${M.pov_start}"></label><label>to <input type="date" id="p-end" value="${M.pov_end}"></label><span class="muted">Weeks outside the period are dimmed.</span></div>
+<div id="period-out"></div></details>
+<details class="card" open><summary>Progression: are people moving up?</summary>
+<p class="small muted">Above the line: new people and people who moved up a tier vs the week before. Below: people who moved down or dropped out.</p>
+${progressionChart(W)}
+${fold('Week-by-week detail', '', 'progressionTable')}${fold('Enrolment cohorts: did new users convert?', '', 'cohortTable')}</details>
+<details class="card" open><summary>Invite funnel and who to call</summary>
+<div class="kpis"><div class="tile"><div class="tl">Invited</div><div class="tv">${f.invited}</div></div><div class="tile"><div class="tl">Ever logged in</div><div class="tv">${f.ever_logged_in}</div></div>
+<div class="tile"><div class="tl">Ever used the UI</div><div class="tv">${f.ever_used_ui}</div></div><div class="tile"><div class="tl">Active now (${C.lapsed_days}d)</div><div class="tv">${f.active_now}</div></div></div>
+${fold('Who to call (ranked: most past use first)', '', 'whoToCall')}</details>`;
+}
+function renderDid() {
+  const days = D.days.map((d, i) => ({...d, i})).filter(d => d.start + DAY > M.since);
+  const per = new Map(); for (const r of S.w30) { const k = r[5]; if (!per.has(k)) per.set(k, new Map()); const m = per.get(k); m.set(r[0], (m.get(r[0]) || new Set()).add(r[1])); }
+  const series = days.map(d => [d.date, per.has(d.i) ? per.get(d.i).size : 0]);
+  const names = days.map(d => per.has(d.i) ? [...per.get(d.i)].map(([u, s]) => `${short(u)} (${s.size} min)`).join(', ') : '');
+  const caps = new Map(); for (const r of S.w30) { const n = D.caps[r[2]].name; caps.set(n, (caps.get(n) || 0) + 1); }
+  const capList = [...caps].sort((a, b) => b[1] - a[1]);
+  return `<h2 id="did">What they did</h2><div class="grid2">
+<details class="card" open><summary>Daily active prospect users, last ${M.window_days} days (UI)</summary>${columns(series, {unit: 'users', names, id: 'dau', w: 520, every: 7, label: wkLabel})}</details>
+<details class="card" open><summary>Capabilities used, last ${M.window_days} days (active user-minutes)</summary>${hbars(capList.slice(0, 10), 'user-minutes')}
+${capList.length > 10 ? fold(`All ${capList.length} capabilities`, hbars(capList, 'user-minutes')) : ''}</details></div>
+<details class="card"><summary>When they work (last ${M.window_days} days, ${esc(M.tz)})</summary><div data-render="heat"></div></details>
+<details class="card" data-render="digest"><summary>What they're trying to prove: hand-written NRQL per user (local only, contains query text)</summary><div class="fold-body"></div></details>
+<details class="card" data-render="assets"><summary>What they built, and whether anyone comes back</summary><div class="fold-body"></div></details>`;
+}
+function renderData() {
+  const W = S.weekly;
+  return `<h2 id="data">Data</h2>
+<details class="card" open><summary>Ingest vs use, week by week</summary>
+<p class="small muted">Same weeks, two panels. Data keeps flowing while nobody looks = money spent on an unused PoV.</p>
+${columns(W.map(w => [w.date, Math.round(w.gb / 100) / 10, w.reason]), {unit: 'TB ingested', w: 760, h: 130, label: wkLabel, cls: 'f-nr', weekly: true})}
+${columns(W.map(w => [w.date, w.active, `${w.tiers.Engaged.length} engaged`]), {unit: 'prospect users active', w: 760, h: 130, label: wkLabel, weekly: true})}
+<div class="legend"><span><span class="sw" style="background:var(--nr)"></span>TB ingested (NrConsumption)</span><span><span class="sw" style="background:var(--series-1)"></span>prospect users active</span></div></details>
+<details class="card" open><summary>Onboarding milestones (Momentum)</summary>
+<p class="small muted">Ingest keys created by the prospect, first data of each type, first entity of each type, ingest-growth weeks. Credit fades (${C.milestone_half_life_days}-day half-life); after ${Math.round(C.stall_after_days / 7)} weeks, ${C.stall_window_days} days with nothing new costs ×${C.stall_factor}.</p>
+${timeline(S.X.ms)}${fold(`All milestones (${S.X.ms.length})`, '', 'milestones')}</details>
+<details class="card" data-render="weeklyTable"><summary>Weekly detail: every number behind the score</summary><div class="fold-body"></div></details>`;
+}
+function renderAppendix() {
+  return `<h2 id="appendix">Appendix</h2>
+${['nrCompare:New Relic staff vs prospect (last ' + M.window_days + ' days)', 'sessions:Every estimated session, per user (last ' + M.window_days + ' days)', 'apiAi:API-key and AI / MCP activity (not counted as human)',
+   'mix:Channel mix per person', 'changes:Config changes, incl. admin and New Relic staff', 'native:Logins and native sessions', 'method:How this report works']
+  .map(x => { const [k, t] = x.split(/:(.+)/); return `<details class="card" data-render="${k}"><summary>${esc(t)}</summary><div class="fold-body"></div></details>`; }).join('')}`;
+}
+const keepU = i => typeof i !== 'number' || !hidden.has(i);
+lazy = {
+  progressionTable: () => table(['Week', 'Quality', 'Active', 'Engaged', 'New (engaged)', 'Moved up (to engaged)', 'Same', 'Moved down', 'Dropped (were engaged)'],
+    S.weekly.map(w => [w.date, esc(w.reason), w.active, w.tiers.Engaged.length, `${w.tr.new_} (${w.tr.newEng})`, `${w.tr.up} (${w.tr.toEng})`, w.tr.same, w.tr.down, `${w.tr.dropped} (${w.tr.droppedEng})`]), {rank: false, top: 99}),
+  cohortTable: () => table(['First week', 'Size', 'Ever light+', 'Ever engaged', 'Engaged in the latest week'], S.cohorts.map(c => [c.date, c.size, c.light, c.engaged, c.now]), {rank: false, top: 99}),
+  whoToCall: () => table(['User', 'Status', 'UI minutes (PoV)', 'Last UI use', 'Logins', 'Invited', 'Invited by'],
+    D.funnel_rows.filter(r => keepU(r.user)).sort((a, b) => (a.status === 'active') - (b.status === 'active') || b.minutes - a.minutes)
+      .map(r => [esc(uname(r.user)), esc(r.status), r.minutes, fmtD(r.last), r.logins, fmtD(r.invited_at), esc(r.invited_by)])),
+  heat: () => { const c = {}, seen = new Set(); for (const r of S.w30) { const k = r[0] + ':' + r[1]; if (seen.has(k)) continue; seen.add(k); const key = D.days[r[5]].weekday + ':' + r[6]; c[key] = (c[key] || 0) + 1; } return heatmap(c); },
+  digest: () => D.digest.filter(d => keepU(d.user)).sort((a, b) => b.distinct - a.distinct).map(d =>
+    fold(`${short(d.user)}: ${d.distinct} distinct queries, ${d.event_types.slice(0, 3).map(x => x[0]).join('/') || 'no FROM'}${d.custom.length ? ', ' + d.custom.slice(0, 3).join(', ') + '…' : ''}`,
+      `<p class="small"><b>Origin:</b> ${esc(Object.entries(d.origins).map(([k, v]) => k + ' ' + v).join(', '))} · <b>Event types:</b> ${esc(d.event_types.map(x => `${x[0]} (${x[1]})`).join(', '))}<br><b>Attributes filtered/faceted on:</b> ${esc(d.attrs.map(x => `${x[0]} (${x[1]})`).join(', ') || '-')}<br><span class="muted">Likely custom: ${esc(d.custom.join(', ') || '-')}</span></p>`
+      + table(['Query (time clauses stripped)', 'Runs'], d.queries.map(q => [`<code>${esc(q[0].slice(0, 300))}</code>`, q[1]])))).join('') || '<p class="muted small">No hand-written queries.</p>',
+  assets: () => '<h3>Dashboards the prospect created</h3>' + table(['Dashboard', 'Creator', 'Views by creator', 'Views by others', 'Other viewers', 'Weeks viewed', 'Last view'],
+      D.dashboards.filter(d => keepU(d.creator)).sort((a, b) => (b.creator_views + b.other_views) - (a.creator_views + a.other_views))
+        .map(d => [esc(d.name), esc(short(d.creator)), d.creator_views, d.other_views, d.other_viewers, d.weeks_viewed, fmtD(d.last_view)]))
+    + '<h3 style="margin-top:12px">Build actions (no admin)</h3>' + table(['When', 'Who', 'Action', 'Target', 'Detail'], S.X.bu.slice().sort((a, b) => b[1] - a[1]).map(r => [fmtD(r[1]), esc(short(r[0])), esc(r[3]), esc(r[4]), esc(r[5])]), {rank: false}),
+  milestones: () => table(['When', 'Milestone', 'What'], S.X.ms.map(m => [fmtD(m[0]), esc(m[2]), esc(m[4] >= 0 ? short(m[4]) : m[3])]), {rank: false, top: 99}),
+  weeklyTable: () => table(['Week', 'Score', 'Quality', 'Active', 'Engaged', 'Light', 'Passive', 'New', 'Lapsed', 'UI user-min', 'TB', ...Object.keys(C.weights).map(k => `${k}/${C.weights[k]}`), '×conc', '×share', '×sustain', '×stall'],
+    S.weekly.map(w => [w.date, w.score, esc(w.colour), w.active, w.tiers.Engaged.length, w.tiers.Light.length, w.tiers.Passive.length, w.new_, w.lapsed, w.minutes, (w.gb / 1000).toFixed(1),
+      ...Object.keys(C.weights).map(k => w.detail.parts[k]), w.detail.conc, w.detail.shareF, w.detail.sustF, w.detail.stallF]), {rank: false, top: 99}),
+  nrCompare: () => {
+    const days = D.days.map((d, i) => ({...d, i})).filter(d => d.start + DAY > M.since);
+    const p = new Map(), seen = new Set(); for (const r of S.w30) { const k = r[0] + ':' + r[1]; if (seen.has(k)) continue; seen.add(k); p.set(r[5], (p.get(r[5]) || 0) + 1); }
+    const n = new Map(); for (const r of D.nr_daily) if (keepU(r[0])) n.set(r[1], (n.get(r[1]) || 0) + r[2]);
+    const mx = Math.max(1, ...days.map(d => Math.max(p.get(d.i) || 0, n.get(d.i) || 0)));
+    const nc = new Map(); for (const r of D.nr_caps) if (keepU(r[0])) nc.set(r[1], (nc.get(r[1]) || 0) + r[2]);
+    return `<p class="small muted">Same scale. New Relic = @${esc(M.nr_domain)} users. Hide an alias with "Hide users" to remove it here and from the share.</p>
+<p class="small"><b>Prospect</b>, UI user-minutes per day</p>${columns(days.map(d => [d.date, p.get(d.i) || 0]), {unit: 'user-minutes', maxv: mx, h: 120, every: 7, label: wkLabel})}
+<p class="small"><b>New Relic staff</b>, UI user-minutes per day</p>${columns(days.map(d => [d.date, n.get(d.i) || 0]), {unit: 'user-minutes', maxv: mx, h: 120, every: 7, label: wkLabel, cls: 'f-nr'})}
+<h3 style="margin-top:12px">New Relic staff capabilities (user-minutes)</h3>${hbars([...nc].sort((a, b) => b[1] - a[1]).slice(0, 12), 'user-minutes', 'nr')}`;
+  },
+  sessions: () => {
+    const by = new Map(); for (const s of D.sessions) if (keepU(s.user)) { if (!by.has(s.user)) by.set(s.user, []); by.get(s.user).push(s); }
+    return [...by].sort((a, b) => b[1].length - a[1].length).map(([u, ss]) => fold(`${short(u)}: ${ss.length} sessions, ${Math.round(ss.reduce((a, s) => a + s.minutes, 0))} min${ss.some(s => s.flag) ? ', ' + ss.filter(s => s.flag).length + ' flagged' : ''}`,
+      table(['Start', 'End', 'Minutes', 'Active min', 'Queries', 'Distinct', 'Capabilities', 'Flag'], ss.map(s => [fmtTs(s.start), fmtTs(s.end).slice(11), s.minutes, s.active_minutes, s.queries, s.distinct, esc(s.capabilities), esc(s.flag)]), {rank: false}))).join('')
+      + `<p class="small muted">Estimate: a session ends after ${M.gap}+ minutes without a query. Flags: repetitive = 30+ min with under 20% distinct queries (a tab left open); mostly idle = 60+ min with activity in under 25% of its minutes.</p>`;
+  },
+  apiAi: () => table(['User', 'Channel', 'Active minutes'], D.non_ui.filter(r => keepU(r[0])).sort((a, b) => b[2] - a[2]).map(r => [esc(uname(r[0])), esc(r[1]), r[2]])),
+  mix: () => table(['Person', 'Cohort', 'Channel', 'Active minutes'], D.mix.filter(r => keepU(r[0])).sort((a, b) => b[3] - a[3]).map(r => [esc(uname(r[0])), esc(r[2]), esc(r[1]), r[3]])),
+  changes: () => table(['Cohort', 'Origin', 'Who', 'Action', 'Count'], D.changes.filter(c => keepU(c.user)).sort((a, b) => (a.cohort !== 'Prospect') - (b.cohort !== 'Prospect') || b.n - a.n).map(c => [esc(c.cohort), esc(c.origin), esc(uname(c.user)), esc(c.action), c.n])),
+  native: () => `<p class="small">${D.logins_window} logins in the last ${M.window_days} days; ${D.expiries_window} session expiries (not activity).</p>` + table(['User', 'Login', 'Hours', 'Ended'], D.native.filter(s => keepU(s.user)).map(s => [esc(uname(s.user)), fmtTs(s.start), s.hours, esc(s.end)]), {rank: false}),
+  method: () => `<p class="small">Python (<code>report.py</code>, <code>pov.py</code>) fetches NrdbQuery, NrAuditEvent, NrConsumption and EntityAudits and writes <code>report.json</code> / <code>report.data.js</code>. This page holds no data; it recomputes tiers, the score, weekly series and KPIs in the browser so hidden users drop out everywhere.</p>
+<p class="small">Parity with Python (no users hidden): <span id="parity-detail">${esc(parity.text)}</span></p><p class="small muted">As of ${esc(M.as_of_text)} ${esc(M.tz)} · whole PoV since ${esc(M.pov_start)} · detail window ${M.window_days} days · human = ${esc(M.human.join(', '))}.</p>`,
+};
+
+// ---------- parity check: the browser port must reproduce Python's numbers ----------
+const parity = (() => {
+  const save = hidden; hidden = new Set(); const s = compute(); hidden = save;
+  const diffs = s.weekly.map((w, i) => [w.date, w.score, D.server.weekly[i]]).filter(x => x[1] !== x[2]);
+  const ok = s.now.score === D.server.score && !diffs.length;
+  return {ok, text: ok ? `matches (score ${s.now.score}, ${s.weekly.length} weekly scores)` : `MISMATCH: now ${s.now.score} vs ${D.server.score}; weeks ${diffs.map(d => d.join(' ')).join('; ')}`};
+})();
+
+function renderFilter() {
+  const mins = new Map(); for (const r of D.ev) mins.set(r[0], (mins.get(r[0]) || 0) + 1); for (const r of D.nr) mins.set(r[0], (mins.get(r[0]) || 0) + r[2]);
+  const group = coh => D.users.map((u, i) => ({u, i})).filter(x => D.cohort[x.i] === coh && mins.get(x.i)).sort((a, b) => mins.get(b.i) - mins.get(a.i))
+    .map(x => `<label><input type="checkbox" data-u="${x.i}" ${hidden.has(x.i) ? 'checked' : ''}> ${esc(x.u)} <span class="m muted">${mins.get(x.i)} min</span></label>`).join('');
+  document.getElementById('filter-pop').innerHTML = `<p class="small"><b>Hide users</b> from every chart, table and KPI. The score is <b>recomputed</b> in your browser; the action list stays as Python generated it. Saved in this browser.</p>
+<p class="small muted"><b>Prospect</b></p>${group('Prospect')}<p class="small muted" style="margin-top:8px"><b>New Relic staff</b> (affects the share)</p>${group('New Relic')}
+<p style="margin-top:8px"><button type="button" id="filter-clear">Show everyone</button></p>`;
+  document.getElementById('filter-label').textContent = hidden.size ? `Hide users (${hidden.size} hidden)` : 'Hide users';
+}
+function render() {
+  S = compute();
+  const open = new Set([...document.querySelectorAll('details[open]')].map(d => d.querySelector('summary')?.textContent));
+  const scroll = window.scrollY;
+  app.innerHTML = `<header><h1>PoV engagement: <code>@${esc(M.domain)}</code></h1>
+<div class="meta muted">Account ${M.account} · as of ${esc(M.as_of_text)} ${esc(M.tz)} · whole PoV since ${esc(M.pov_start)} · human = ${esc(M.human.join(', '))} · <span class="badge" data-tip="${esc(parity.text)}">${parity.ok ? '&#10003; browser = Python' : '! parity mismatch'}</span>${hidden.size ? ` · <b>${hidden.size} user${hidden.size > 1 ? 's' : ''} hidden</b>` : ''}</div></header>`
+    + renderSummary() + renderPeople() + renderDid() + renderData() + renderAppendix();
+  if (render.done) document.querySelectorAll('details').forEach(d => { const t = d.querySelector('summary')?.textContent; if (open.has(t)) d.open = true; else if (!d.classList.contains('filter')) d.open = false; });
+  render.done = true;
+  document.querySelectorAll('details[open][data-render], details[open] [data-render]').forEach(fill);
+  recomputePeriod(); renderFilter(); window.scrollTo(0, scroll);
+}
+function fill(el) {
+  const host = el.matches('details[data-render]') ? el : el;
+  const key = host.dataset.render; if (!key || host.dataset.done === '1') return;
+  const target = host.tagName === 'DETAILS' ? (host.querySelector(':scope > .fold-body') || host) : host;
+  target.insertAdjacentHTML('beforeend', lazy[key]()); host.dataset.done = '1';
+}
+function recomputePeriod() {
+  const s = document.getElementById('p-start'), e = document.getElementById('p-end'); if (!s) return;
+  const p = period(S.weekly, s.value, e.value), out = document.getElementById('period-out');
+  document.querySelectorAll('[data-week]').forEach(el => { const d = el.dataset.week; el.classList.toggle('out-of-period', !(d <= e.value && addDays(d, 6) >= s.value)); });
+  out.innerHTML = p ? `<div class="kpis">
+<div class="tile"><div class="tl">Period score (average of ${p.weeks} weeks)</div><div class="tv">${p.mean} <span class="small muted">/ 100</span></div><div class="ts">${esc(bandText(p.mean))}</div></div>
+<div class="tile"><div class="tl">Lowest / highest week</div><div class="tv">${p.min} / ${p.max}</div><div class="ts">best week: ${band(p.max)[1]} band</div></div>
+<div class="tile"><div class="tl">Trend, last 4 weeks</div><div class="tv">${p.trend}</div><div class="ts">${p.slope.toFixed(1)} points/week</div></div>
+<div class="tile"><div class="tl">Quality over the period</div><div class="tv">${chip(p.colour, p.colour)}</div><div class="ts">${esc(p.reason)}</div></div></div>` : '<p class="muted small">No weeks in this period.</p>';
+}
+
+// ---------- events ----------
+document.addEventListener('toggle', e => { const d = e.target; if (d.open) { if (d.dataset.render) fill(d); d.querySelectorAll('[data-render]').forEach(x => { if (!x.closest('details:not([open])')) fill(x); }); } }, true);
+document.addEventListener('change', e => {
+  if (e.target.matches('[data-u]')) { const i = +e.target.dataset.u; e.target.checked ? hidden.add(i) : hidden.delete(i); localStorage.setItem(KEY, JSON.stringify([...hidden])); render(); document.getElementById('filter').open = true; }
+  if (e.target.id === 'p-start' || e.target.id === 'p-end') recomputePeriod();
+});
+document.addEventListener('click', e => {
+  if (e.target.id === 'filter-clear') { hidden = new Set(); localStorage.setItem(KEY, '[]'); render(); }
+  if (e.target.id === 'acts-all') { const a = document.getElementById('acts'); a.classList.toggle('all'); e.target.textContent = a.classList.contains('all') ? 'Show fewer' : 'Show all ' + a.children.length; }
+  if (e.target.matches('.showall')) { const t = document.getElementById(e.target.dataset.t); t.classList.toggle('all'); e.target.textContent = t.classList.contains('all') ? 'Show top 5' : 'Show all ' + t.querySelectorAll('tbody tr').length; }
+  if (e.target.matches('[data-fold]')) document.querySelectorAll('main details').forEach(d => { d.open = e.target.dataset.fold === 'open'; });
+  if (e.target.id === 'theme') { const r = document.documentElement, dark = r.dataset.theme ? r.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; r.dataset.theme = dark ? 'light' : 'dark'; }
+  const g = e.target.closest('.pick'); if (g) { const p = document.getElementById(g.dataset.panel); if (p) p.innerHTML = `<b>${esc(g.dataset.label)}:</b> ${esc(g.dataset.names)}`; }
+});
+const tip = document.getElementById('tip');
+document.addEventListener('mousemove', e => { const t = e.target.closest('[data-tip]'); if (!t) { tip.style.opacity = 0; return; } tip.textContent = t.dataset.tip; tip.style.opacity = 1;
+  tip.style.left = Math.min(e.clientX + 12, innerWidth - tip.offsetWidth - 8) + 'px'; tip.style.top = (e.clientY - tip.offsetHeight - 10) + 'px'; });
+render();
+</script></body></html>
